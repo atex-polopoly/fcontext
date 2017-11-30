@@ -1,25 +1,27 @@
+---
 driver:
   name: vagrant
 
 provisioner:
   name: chef_zero
-  deprecations_as_errors: true
+  # You may wish to disable always updating cookbooks in CI or other testing environments.
+  # For example:
+  #   always_update_cookbooks: <%= !ENV['CI'] %>
+
+verifier:
+  name: inspec
 
 platforms:
-  - name: centos-6.8
-  - name: centos-7.3
-  - name: fedora-25
-
-
+    #- name: rhel-7.3
+    - name: centos-7.2
+  
 suites:
   - name: default
     run_list:
-      - recipe[selinux_policy_test::setup]
-      - recipe[selinux_policy_test::single_port]
-      - recipe[selinux_policy_test::twice_port]
-      - recipe[selinux_policy_test::range_port]
-      - recipe[selinux_policy_test::bad_port]
-      - recipe[selinux_policy_test::module]
-      - recipe[selinux_policy_test::module_directory]
-      - recipe[selinux_policy_test::fcontext]
-      - recipe[selinux_policy_test::fcontext_filetype]
+      - recipe[fcontext-test::default]
+      #- recipe[fcontext::default]
+      
+    verifier:
+      inspec_tests:
+        - test/smoke/default
+    attributes:

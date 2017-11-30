@@ -1,4 +1,4 @@
-# Cookbook: selinux_policy
+# Cookbook: fcontext
 # Attribute file: default
 # 2015, GPLv2, Nitzan Raz (http://backslasher.net)
 

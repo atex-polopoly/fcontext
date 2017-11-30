@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+source 'https://supermarket.chef.io'
+
+#cookbook 'fcontext', path: '../../../../fcontext' 
+cookbook 'fcontext', path: '/Users/carlostrand/Desktop/repos/chef-repo/cookbooks/fcontext' 
+metadata
