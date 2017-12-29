@@ -42,71 +42,39 @@ action :relabel do
   new_resource.updated_by_last_action(true) 
 end
 
-action :add do
-  execute "selinux-fcontext-#{new_resource.secontext}-add" do
-    command "/usr/sbin/semanage fcontext -a #{semanage_options(new_resource.file_type)} -t #{new_resource.secontext} '#{new_resource.file_spec}'"
-    not_if fcontext_defined(new_resource.file_spec, new_resource.file_type)
+
+def set_fcontext (not_if, only_if, commands, secontext, file_spec_suffix )
+  execute "selinux-fcontext-#{new_resource.secontext}-set" do
+    command "/usr/sbin/semanage fcontext #{commands} #{secontext} '#{new_resource.file_spec}#{file_spec_suffix}'"
+    if not_if != nil
+      not_if not_if
+    end
+    if only_if != nil
+      only_if only_if.to_s
+    end
     only_if { use_selinux }
     notifies :relabel, new_resource, :immediate
   end
 end
 
-action :add_recursive do
-    execute "selinux-fcontext-#{new_resource.secontext}-add_recursive" do
-    command "/usr/sbin/semanage fcontext -a #{semanage_options(new_resource.file_type)} -t #{new_resource.secontext} '#{new_resource.file_spec}(/.*)?'"
-    not_if fcontext_defined("#{new_resource.file_spec}(/.*)?", new_resource.file_type, new_resource.secontext) 
-    only_if { new_resource.recursive } 
-    only_if { use_selinux }
-    notifies :relabel, new_resource, :immediate
-  end
+action :set do
+    add_not_if = fcontext_defined(new_resource.file_spec, new_resource.file_type, new_resource.secontext)
+    set_fcontext(add_not_if, true, "-a #{semanage_options(new_resource.file_type)} -t", new_resource.secontext, '')
+
+    if new_resource.recursive
+      add_recursive_not_if = fcontext_defined("#{new_resource.file_spec}(/.*)?", new_resource.file_type, new_resource.secontext)
+      set_fcontext(add_recursive_not_if, new_resource.recursive, "-a #{semanage_options(new_resource.file_type)} -t", new_resource.secontext, '(/.*)?')
+    else
+      delete_recursive_only_if = fcontext_defined("#{new_resource.file_spec}(/.*)?", new_resource.file_type)
+      set_fcontext(nil, delete_recursive_only_if, '-d', '', '(/.*)?')
+    end
 end
 
-action :remove_recursive do
-    execute "selinux-fcontext-#{new_resource.secontext}-remove_recursive" do
-      
-      command "/usr/sbin/semanage fcontext #{semanage_options(new_resource.file_type)} -d '#{new_resource.file_spec}(/.*)?'"
-      not_if { new_resource.recursive }
-      only_if fcontext_defined("#{new_resource.file_spec}(/.*)?", new_resource.file_type, new_resource.secontext)
-      only_if { use_selinux }
-      notifies :relabel, new_resource, :immediate
-  end
-end
-
-# Delete if exists
 action :delete do
-  execute "selinux-fcontext-#{new_resource.secontext}-delete" do
-    command "/usr/sbin/semanage fcontext #{semanage_options(new_resource.file_type)} -d '#{new_resource.file_spec}'"
-    only_if fcontext_defined(new_resource.file_spec, new_resource.file_type, new_resource.secontext)
-    only_if { use_selinux }
-    notifies :relabel, new_resource, :immediate
-  end
+    delete_only_if = fcontext_defined(new_resource.file_spec, new_resource.file_type, new_resource.secontext)
+    set_fcontext(nil, only_if, '-d', '', '')
+
+    delete_recursive_only_if = fcontext_defined("#{new_resource.file_spec}(/.*)?", new_resource.file_type, new_resource.secontext)
+    set_fcontext(nil, delete_recursive_only_if, '-d', '', '(/.*)?')
 end
 
-action :modify_recursive do
-  execute "selinux-fcontext-#{new_resource.secontext}-modify_recursive" do
-    command "/usr/sbin/semanage fcontext -m #{semanage_options(new_resource.file_type)} -t #{new_resource.secontext} '#{new_resource.file_spec}(/.*)?'"
-    only_if { use_selinux }
-    only_if fcontext_defined("#{new_resource.file_spec}(/.*)?", new_resource.file_type)
-    not_if  fcontext_defined("#{new_resource.file_spec}(/.*)?", new_resource.file_type, new_resource.secontext)
-    notifies :relabel, new_resource, :immediate
-  end
-end
-
-
-action :modify do
-  execute "selinux-fcontext-#{new_resource.secontext}-modify" do
-    command "/usr/sbin/semanage fcontext -m #{semanage_options(new_resource.file_type)} -t #{new_resource.secontext} '#{new_resource.file_spec}'"
-    only_if { use_selinux }
-    only_if fcontext_defined(new_resource.file_spec, new_resource.file_type)
-    not_if  fcontext_defined(new_resource.file_spec, new_resource.file_type, new_resource.secontext)
-    notifies :relabel, new_resource, :immediate
-  end
-end
-
-action :addormodify do
-  run_action(:add)  
-  run_action(:add_recursive)  
-  run_action(:remove_recursive) 
-  run_action(:modify) 
-  run_action(:modify_recursive) 
-end
