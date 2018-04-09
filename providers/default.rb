@@ -40,7 +40,7 @@ use_inline_resources
 # Run restorecon to fix label
 action :relabel do
   res = shell_out!('restorecon', '-iRv', new_resource.file_spec)
-  new_resource.updated_by_last_action(true) 
+  new_resource.updated_by_last_action(!res.stdout.strip.empty?)
 end
 
 
