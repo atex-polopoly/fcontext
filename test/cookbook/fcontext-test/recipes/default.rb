@@ -61,7 +61,7 @@ end
 
 fcontext service2 do
     secontext 'var_log_t'
-    recursive '*'
+    filter '*'
     only_if { File.directory?(service2) }
 end
 
@@ -125,12 +125,12 @@ end
 
 fcontext '/srv/service3' do
   secontext 'var_log_t'
-  recursive 'log'
+  filter 'log'
   only_if { File.directory?('/srv/service3') }
 end
 
 fcontext '/srv/service3' do
   secontext 'var_log_t'
-  recursive '/(.*t[0-9]+t)'
+  filter '/(.*t[0-9]+t)'
   only_if { File.directory?('/srv/service3') }
 end

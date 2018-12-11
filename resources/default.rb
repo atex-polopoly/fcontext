@@ -6,4 +6,5 @@ default_action :set
 attribute :file_spec, kind_of: String, name_attribute: true
 attribute :secontext, kind_of: String
 attribute :file_type, kind_of: String, default: 'a', equal_to: %w(a f d c b s l p)
-attribute :recursive, kind_of: String, default: ''
+attribute :recursive, default: false
+attribute :filter, kind_of: String, default: ''
