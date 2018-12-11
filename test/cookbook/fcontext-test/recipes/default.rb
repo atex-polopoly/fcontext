@@ -23,8 +23,8 @@ file service1_file do
 end
 
 fcontext service1 do
-    secontext 'var_log_t'
-    only_if { File.directory?(service1) }
+  secontext 'var_log_t'
+  only_if { File.directory?(service1) }
 end
 
 service2 = '/srv/service2'
@@ -61,6 +61,76 @@ end
 
 fcontext service2 do
     secontext 'var_log_t'
-    recursive true
+    recursive '*'
     only_if { File.directory?(service2) }
+end
+
+directory '/srv/service3' do
+  owner 'root'
+  group 'root'
+  mode '0755'
+  recursive true
+  action :create
+end
+
+directory '/srv/service3/directory' do
+  owner 'root'
+  group 'root'
+  mode '0755'
+  recursive true
+  action :create
+end
+
+file '/srv/service3/file1.txt' do
+  content 'test'
+  mode '0644'
+  owner 'root'
+  group 'root'
+end
+
+file '/srv/service3/file2.log' do
+  content 'test'
+  mode '0644'
+  owner 'root'
+  group 'root'
+end
+
+file '/srv/service3/directory/file1.log' do
+  content 'test'
+  mode '0644'
+  owner 'root'
+  group 'root'
+end
+
+file '/srv/service3/directory/file2_log' do
+  content 'test'
+  mode '0644'
+  owner 'root'
+  group 'root'
+end
+
+file '/srv/service3/directory/file3.txt' do
+  content 'test'
+  mode '0644'
+  owner 'root'
+  group 'root'
+end
+
+file '/srv/service3/directory/file4.t4t' do
+  content 'test'
+  mode '0644'
+  owner 'root'
+  group 'root'
+end
+
+fcontext '/srv/service3' do
+  secontext 'var_log_t'
+  recursive 'log'
+  only_if { File.directory?('/srv/service3') }
+end
+
+fcontext '/srv/service3' do
+  secontext 'var_log_t'
+  recursive '/(.*t[0-9]+t)'
+  only_if { File.directory?('/srv/service3') }
 end

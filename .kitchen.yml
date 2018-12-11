@@ -14,13 +14,12 @@ verifier:
 platforms:
     #- name: rhel-7.3
     - name: centos-7.2
-  
+
 suites:
   - name: default
     run_list:
       - recipe[fcontext-test::default]
       #- recipe[fcontext::default]
-      
     verifier:
       inspec_tests:
         - test/smoke/default

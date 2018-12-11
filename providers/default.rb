@@ -5,6 +5,21 @@ def whyrun_supported?
   true
 end
 
+# Make a file spec suffix from a recurse spec:-
+# * = Make an 'all files' regex
+# abc, 123, a2c = Alpha/numeric, make a file suffix regex
+# (/.*[\.|_]log$) = Non alpha/numeric, assume regex given and pass throgh
+def make_file_spec_suffix(recurse)
+  case recurse
+  when '*'
+    '/(.*)'
+  when /^[a-zA-Z0-9]+$/
+    "/(.*#{recurse}$)"
+  else
+    recurse
+  end
+end
+
 # Produces a string containing a Shell command pipeline that tells you if a given fcontext is defined
 def fcontext_defined(file_spec, file_type, label = nil)
   file_hash = {
@@ -17,7 +32,7 @@ def fcontext_defined(file_spec, file_type, label = nil)
     'l' => 'symbolic link',
     'p' => 'named pipe',
   }
-  
+
    label_matcher = label ? "system_u:object_r:#{Regexp.escape(label)}:s0\\s*$" : ''
   "semanage fcontext -l | grep -qP '^#{Regexp.escape(file_spec)}\\s+#{Regexp.escape(file_hash[file_type])}\\s+#{label_matcher}'"
 end
@@ -43,7 +58,6 @@ action :relabel do
   new_resource.updated_by_last_action(!res.stdout.strip.empty?)
 end
 
-
 def set_fcontext (not_if, only_if, commands, secontext, file_spec_suffix )
   execute "selinux-fcontext-#{new_resource.secontext}-set" do
     command "/usr/sbin/semanage fcontext #{commands} #{secontext} '#{new_resource.file_spec}#{file_spec_suffix}'"
@@ -55,52 +69,61 @@ def set_fcontext (not_if, only_if, commands, secontext, file_spec_suffix )
 end
 
 action :set do
-    not_if = fcontext_defined(new_resource.file_spec,
-                              new_resource.file_type,
-                              new_resource.secontext)
-    set_fcontext(not_if,
-                 true,
-                 "-a #{semanage_options(new_resource.file_type)} -t",
-                 new_resource.secontext,
-                 '')
+  file_spec_suffix = make_file_spec_suffix(new_resource.recursive) || ''
 
-    if new_resource.recursive
-      recursive_not_if = fcontext_defined("#{new_resource.file_spec}(/.*)?",
-                                          new_resource.file_type,
-                                          new_resource.secontext)
-      set_fcontext(recursive_not_if,
-                   true,
-                   "-a #{semanage_options(new_resource.file_type)} -t",
-                   new_resource.secontext,
-                   '(/.*)?')
-    else
-      delete_recursive_only_if = fcontext_defined("#{new_resource.file_spec}(/.*)?",
-                                                  new_resource.file_type)
-      set_fcontext(nil,
-                   delete_recursive_only_if,
-                   '-d',
-                   '',
-                   '(/.*)?')
-    end
+  not_if = fcontext_defined(
+    "#{new_resource.file_spec}#{file_spec_suffix}",
+    new_resource.file_type,
+    new_resource.secontext
+  )
+  set_fcontext(
+    not_if, true,
+    "-a #{semanage_options(new_resource.file_type)} -t",
+    new_resource.secontext,
+    file_spec_suffix
+  )
+
+  # Apply context to file_spec if 'all' recurse option
+
+  if new_resource.recursive == '*'
+    not_if = fcontext_defined(
+      new_resource.file_spec,
+      new_resource.file_type,
+      new_resource.secontext
+    )
+    set_fcontext(
+      not_if, true,
+      "-a #{semanage_options(new_resource.file_type)} -t",
+      new_resource.secontext, ''
+    )
+  end
+
 end
 
 action :delete do
-    only_if = fcontext_defined(new_resource.file_spec,
-                               new_resource.file_type,
-                               new_resource.secontext)
-    set_fcontext(nil,
-                 only_if,
-                 '-d',
-                 '',
-                 '')
+  file_spec_suffix = make_file_spec_suffix(new_resource.recursive) || ''
 
-    recursive_only_if = fcontext_defined("#{new_resource.file_spec}(/.*)?",
-                                         new_resource.file_type,
-                                         new_resource.secontext)
-    set_fcontext(nil,
-                 recursive_only_if,
-                 '-d',
-                 '',
-                 '(/.*)?')
+  only_if = fcontext_defined(
+    "#{new_resource.file_spec}#{file_spec_suffix}",
+    new_resource.file_type,
+    new_resource.secontext
+  )
+  set_fcontext(
+    nil, only_if, '-d', '',
+    file_spec_suffix
+  )
+
+  #  Apply context to file_spec if 'all' recurse option
+
+  if new_resource.recursive == '*'
+    only_if = fcontext_defined(
+      new_resource.file_spec,
+      new_resource.file_type,
+      new_resource.secontext
+    )
+    set_fcontext(
+      nil, only_if, '-d', '', ''
+    )
+  end
+
 end
-
