@@ -116,3 +116,27 @@ describe file('/srv/service3/directory/file4.t4t') do
   its('mode') { should cmp '0644' }
   its('selinux_label') { should eq 'unconfined_u:object_r:var_log_t:s0' }
 end
+
+describe directory('/srv/service4') do
+  it { should exist }
+  it { should be_owned_by 'root' }
+  it { should be_grouped_into 'root' }
+  its('mode') { should cmp '0755' }
+  its('selinux_label') { should eq 'unconfined_u:object_r:var_log_t:s0' }
+end
+
+describe file('/srv/service4/file7.txt') do
+  it { should exist }
+  it { should be_owned_by 'root' }
+  it { should be_grouped_into 'root' }
+  its('mode') { should cmp '0644' }
+  its('selinux_label') { should eq 'unconfined_u:object_r:var_log_t:s0' }
+end
+
+describe file('/srv/service4/file8.log') do
+  it { should exist }
+  it { should be_owned_by 'root' }
+  it { should be_grouped_into 'root' }
+  its('mode') { should cmp '0644' }
+  its('selinux_label') { should eq 'unconfined_u:object_r:var_log_t:s0' }
+end

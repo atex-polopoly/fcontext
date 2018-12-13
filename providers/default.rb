@@ -9,7 +9,8 @@ end
 # * = Make an 'all files' regex
 # abc, 123, a2c = Alpha/numeric, make a file suffix regex
 # (/.*[\.|_]log$) = Non alpha/numeric, assume regex given and pass throgh
-def make_file_spec_suffix(filter)
+def make_file_spec_suffix(filter, recursive)
+  filter = '*' if filter.empty? && recursive
   case filter
   when '*'
     '/(.*)'
@@ -69,7 +70,7 @@ def set_fcontext (not_if, only_if, commands, secontext, file_spec_suffix )
 end
 
 action :set do
-  file_spec_suffix = make_file_spec_suffix(new_resource.filter) || ''
+  file_spec_suffix = make_file_spec_suffix(new_resource.filter, new_resource.recursive)
 
   not_if = fcontext_defined(
     "#{new_resource.file_spec}#{file_spec_suffix}",
@@ -85,7 +86,7 @@ action :set do
 
   # Apply context to file_spec if 'all' recurse option
 
-  if new_resource.filter == '*'
+  if new_resource.filter == '*' || new_resource.recursive
     not_if = fcontext_defined(
       new_resource.file_spec,
       new_resource.file_type,
@@ -101,7 +102,7 @@ action :set do
 end
 
 action :delete do
-  file_spec_suffix = make_file_spec_suffix(new_resource.filter) || ''
+  file_spec_suffix = make_file_spec_suffix(new_resource.filter, new_resource.recursive)
 
   only_if = fcontext_defined(
     "#{new_resource.file_spec}#{file_spec_suffix}",
@@ -115,7 +116,7 @@ action :delete do
 
   #  Apply context to file_spec if 'all' recurse option
 
-  if new_resource.filter == '*'
+  if new_resource.filter == '*' || new_resource.recursive
     only_if = fcontext_defined(
       new_resource.file_spec,
       new_resource.file_type,

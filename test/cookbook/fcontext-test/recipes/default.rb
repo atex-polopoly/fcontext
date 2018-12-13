@@ -134,3 +134,31 @@ fcontext '/srv/service3' do
   filter '/(.*t[0-9]+t)'
   only_if { File.directory?('/srv/service3') }
 end
+
+directory '/srv/service4' do
+  owner 'root'
+  group 'root'
+  mode '0755'
+  recursive true
+  action :create
+end
+
+file '/srv/service4/file7.txt' do
+  content 'test'
+  mode '0644'
+  owner 'root'
+  group 'root'
+end
+
+file '/srv/service4/file8.log' do
+  content 'test'
+  mode '0644'
+  owner 'root'
+  group 'root'
+end
+
+fcontext '/srv/service4' do
+  secontext 'var_log_t'
+  recursive true
+  only_if { File.directory?('/srv/service4') }
+end
