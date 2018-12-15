@@ -13,9 +13,9 @@ def make_file_spec_suffix(filter, recursive)
   filter = '*' if filter.empty? && recursive
   case filter
   when '*'
-    '/(.*)'
+    '/(.*)?'
   when /^[a-zA-Z0-9]+$/
-    "/(.*#{filter}$)"
+    "/(.*[\\.|_]?#{filter})?"
   else
     filter
   end
@@ -33,8 +33,7 @@ def fcontext_defined(file_spec, file_type, label = nil)
     'l' => 'symbolic link',
     'p' => 'named pipe',
   }
-
-   label_matcher = label ? "system_u:object_r:#{Regexp.escape(label)}:s0\\s*$" : ''
+  label_matcher = label ? "system_u:object_r:#{Regexp.escape(label)}:s0\\s*$" : ''
   "semanage fcontext -l | grep -qP '^#{Regexp.escape(file_spec)}\\s+#{Regexp.escape(file_hash[file_type])}\\s+#{label_matcher}'"
 end
 

@@ -131,7 +131,7 @@ end
 
 fcontext '/srv/service3' do
   secontext 'var_log_t'
-  filter '/(.*t[0-9]+t)'
+  filter '/(.*t[0-9]+t)?'
   only_if { File.directory?('/srv/service3') }
 end
 
